@@ -9,6 +9,11 @@ const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-sans' });
 export const metadata: Metadata = {
   title: 'Celebration Gallery - Making Delhi\'s Parties Pop',
   description: 'Delhi NCR\'s premium destination for high-octane events, maximalist party setups, and vibrant memories.',
+  icons: {
+    icon: '/logo.svg',
+    shortcut: '/logo.svg',
+    apple: '/logo.svg',
+  },
 };
 
 export default function RootLayout({

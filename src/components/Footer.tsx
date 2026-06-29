@@ -3,6 +3,8 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import Image from 'next/image';
+
 export default function Footer() {
   const pathname = usePathname();
 
@@ -14,11 +16,18 @@ export default function Footer() {
   return (
     <footer className="w-full rounded-t-[2.5rem] bg-surface-white/60 dark:bg-background-dark/5 backdrop-blur-sm border-t border-muted-pink mt-16 shadow-inner py-12 px-6 sm:px-10">
       <div className="flex flex-col md:flex-row justify-between items-center w-full max-w-[1200px] mx-auto font-sans">
-        <div className="mb-8 md:mb-0 text-center md:text-left">
+        <div className="mb-8 md:mb-0 text-center md:text-left flex flex-col items-center md:items-start">
           <Link 
             href="/"
-            className="font-black text-2xl text-primary mb-2 cursor-pointer hover:text-primary-dark transition-colors block"
+            className="flex items-center gap-3 font-black text-2xl text-primary mb-2 cursor-pointer hover:text-primary-dark transition-colors"
           >
+            <div className="size-8">
+              <img 
+                src="/logo.svg" 
+                alt="Celebration Gallery Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
             Celebration Gallery
           </Link>
           <p className="text-on-surface-variant text-sm max-w-sm font-medium leading-relaxed">

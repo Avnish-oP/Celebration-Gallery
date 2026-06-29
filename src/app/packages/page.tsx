@@ -1,29 +1,44 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BIRTHDAY_PACKAGES, BirthdayPackage, GalleryItem, GALLERY_ITEMS, BookingData } from '../../types';
+import { BIRTHDAY_PACKAGES, BirthdayPackage, PACKAGE_CATEGORIES, PackageCategory } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Star, Sparkles, CheckCircle } from 'lucide-react';
+import { Star, Sparkles, CheckCircle, Palette, ArrowRight, Wand2, X } from 'lucide-react';
+import Image from 'next/image';
 
+// Gradient backgrounds for packages without images
+const GRADIENT_CARDS = [
+  'from-primary/80 via-[#ff6b8a] to-accent-yellow/70',
+  'from-[#6366f1] via-[#8b5cf6] to-primary/60',
+  'from-[#0ea5e9] via-[#6366f1] to-primary/80',
+  'from-accent-yellow via-[#f59e0b] to-primary/60',
+];
 
-
-export default function PackagesScreen() {
+function PackagesContent() {
   const router = useRouter();
-  const setSelectedPackageId = (id: string) => router.push(`/deep-dive?packageId=${id}`);
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams?.get('category') as PackageCategory | null;
 
-  const [selectedPrice, setSelectedPrice] = useState<string>('2000-5000');
-  const [selectedVibe, setSelectedVibe] = useState<string>('all'); // Set to 'all' or 'Minimalist'
+  const [selectedCategory, setSelectedCategory] = useState<string>(categoryParam || 'all');
+  const [activePackage, setActivePackage] = useState<BirthdayPackage | null>(null);
 
-  // Filter packages based on active selection
-  const filteredPackages = BIRTHDAY_PACKAGES.filter(pkg => {
-    const matchPrice = selectedPrice === 'all' || pkg.priceRange === selectedPrice;
-    const matchVibe = selectedVibe === 'all' || pkg.vibe === selectedVibe;
-    return matchPrice && matchVibe;
-  });
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    // Update URL without full navigation
+    if (value === 'all') {
+      window.history.replaceState(null, '', '/packages');
+    } else {
+      window.history.replaceState(null, '', `/packages?category=${value}`);
+    }
+  };
+
+  const filteredPackages = useMemo(() => {
+    if (selectedCategory === 'all') return BIRTHDAY_PACKAGES;
+    return BIRTHDAY_PACKAGES.filter(pkg => pkg.category === selectedCategory);
+  }, [selectedCategory]);
 
   const handleViewDetails = (id: string) => {
-    setSelectedPackageId(id);
-    ;
+    router.push(`/booking?packageId=${id}`);
   };
 
   return (
@@ -37,245 +52,247 @@ export default function PackagesScreen() {
       {/* Header Section */}
       <header className="px-6 sm:px-10 py-12 text-center md:text-left">
         <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-text-dark tracking-tighter mb-4">
-          Birthday <span className="text-primary">Celebrations</span>
+          Our <span className="text-primary">Packages</span>
         </h1>
         <p className="text-lg sm:text-xl font-bold text-on-surface-variant max-w-2xl leading-relaxed">
           Making birthday magic across Delhi NCR. From intimate soirées to high-energy bashes, we curate the vibes while you make the memories.
         </p>
       </header>
 
-      {/* Filters Section */}
+      {/* Category Filter Pill Bar */}
       <section className="px-6 sm:px-10 mb-12">
-        <div className="flex flex-col md:flex-row gap-8 items-start md:items-center bg-white/60 p-6 rounded-2xl border border-muted-pink/30 backdrop-blur-md">
-          {/* Price Filters */}
-          <div className="space-y-3 w-full md:w-auto">
-            <span className="text-xs uppercase tracking-widest text-on-surface-variant font-black">Price Range</span>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { label: 'All', value: 'all' },
-                { label: '< ₹2,000', value: '<2000' },
-                { label: '₹2,000 - ₹5,000', value: '2000-5000' },
-                { label: '₹5,000+', value: '5000+' }
-              ].map(p => (
-                <button
-                  key={p.value}
-                  onClick={() => setSelectedPrice(p.value)}
-                  className={`px-5 py-2.5 rounded-full border text-sm font-black transition-all cursor-pointer ${
-                    selectedPrice === p.value
-                      ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
-                      : 'bg-white border-gray-200 text-text-dark hover:border-primary'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Style Filters */}
-          <div className="space-y-3 w-full md:w-auto">
-            <span className="text-xs uppercase tracking-widest text-on-surface-variant font-black">Vibe & Style</span>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { label: 'All', value: 'all' },
-                { label: 'Minimalist', value: 'Minimalist' },
-                { label: 'Neon Bash', value: 'Neon Bash' },
-                { label: 'Floral Fantasy', value: 'Floral Fantasy' },
-                { label: 'Vintage Gold', value: 'Vintage Gold' }
-              ].map(v => (
-                <button
-                  key={v.value}
-                  onClick={() => setSelectedVibe(v.value)}
-                  className={`px-5 py-2.5 rounded-full border text-sm font-black transition-all cursor-pointer ${
-                    selectedVibe === v.value
-                      ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
-                      : 'bg-white border-gray-200 text-text-dark hover:border-primary'
-                  }`}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
+        <div className="flex flex-col gap-4 bg-white/60 p-6 rounded-2xl border border-muted-pink/30 backdrop-blur-md">
+          <span className="text-xs uppercase tracking-widest text-on-surface-variant font-black">Category</span>
+          <div className="flex flex-wrap gap-2">
+            {PACKAGE_CATEGORIES.map(cat => (
+              <button
+                key={cat.value}
+                onClick={() => handleCategoryChange(cat.value)}
+                className={`px-5 py-2.5 rounded-full border text-sm font-black transition-all cursor-pointer ${
+                  selectedCategory === cat.value
+                    ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
+                    : 'bg-white border-gray-200 text-text-dark hover:border-primary'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Bento Grid Main Content */}
+      {/* Package Cards Grid */}
       <section className="px-6 sm:px-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          
-          {/* Render individual items manually or in loop, maintaining exact specifications */}
-          
-          {/* Card 1: Grand Neon Bash (Featured) */}
-          <div className="md:col-span-8 group relative bg-white rounded-xl overflow-hidden hover-bento shadow-bento flex flex-col justify-end min-h-[450px] border border-muted-pink/20">
-            <div className="absolute inset-0">
-              <img 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                alt="A luxury birthday neon setup"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUuKKKLAI2RdK5K5ZnuJ4sTfmOD9yhnAktM6mJH3KudfV7q6TBFh-6sL9bGsDmfqRt4Emwk53Xut15gjOBCAcQ7b4ZPbjYP_97voEy5WsrLaaKe3g3wk_hu1elcf7oavFYUSUJeNO6_QXjWpRGbrOXeQ04BG8YZdoCZGJj3NeFbN73qlYBzJ5CLOua9Ty_-KIdeDUGWfmR1cGJm2NXB6EOu0ltUL9Xrlgtil0BWi7Ukn3ob3boFm-JcmM_ZkikjljKta-lzPLsLA"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-            </div>
-            
-            <div className="absolute top-6 left-6 bg-accent-yellow text-text-dark font-black text-sm px-4 py-2 rounded-full shadow-lg">
-              ₹4,999
-            </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selectedCategory}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="grid grid-cols-1 md:grid-cols-12 gap-6"
+          >
+            {filteredPackages.length > 0 ? (
+              <>
+                {filteredPackages.map((pkg, index) => {
+                  // First card gets featured (large) layout
+                  const isFeatured = index === 0;
+                  const gradientClass = GRADIENT_CARDS[index % GRADIENT_CARDS.length];
 
-            <div className="relative p-8 z-10">
-              <h3 className="text-3xl font-black text-white mb-3">Grand Neon Bash</h3>
-              
-              <div className="flex flex-wrap gap-4 mb-6">
-                <div className="flex items-center text-white/95 gap-2 font-black text-xs">
-                  <Star className="w-4 h-4 text-accent-yellow fill-accent-yellow" />
-                  Custom Neon Name Sign
-                </div>
-                <div className="flex items-center text-white/95 gap-2 font-black text-xs">
-                  <Star className="w-4 h-4 text-accent-yellow fill-accent-yellow" />
-                  200+ Balloon Installation
-                </div>
-                <div className="flex items-center text-white/95 gap-2 font-black text-xs">
-                  <Star className="w-4 h-4 text-accent-yellow fill-accent-yellow" />
-                  Professional Photographer
-                </div>
-              </div>
+                  if (isFeatured) {
+                    return (
+                      <motion.div
+                        key={pkg.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                        onClick={() => setActivePackage(pkg)}
+                        className="md:col-span-8 group relative bg-white rounded-xl overflow-hidden hover-bento shadow-bento flex flex-col justify-end min-h-[450px] border border-muted-pink/20 cursor-pointer"
+                      >
+                        {/* Image or Gradient background */}
+                        {pkg.image ? (
+                          <div className="absolute inset-0">
+                            <Image 
+                              className="object-cover group-hover:scale-105 transition-transform duration-700" 
+                              alt={pkg.title}
+                              src={pkg.image}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 66vw"
+                            />
+                          </div>
+                        ) : (
+                          <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`}>
+                            {/* Decorative elements */}
+                            <div className="absolute top-10 right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                            <div className="absolute bottom-20 left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+                            <div className="absolute top-1/3 left-1/4 text-white/10 text-[120px] font-black leading-none select-none pointer-events-none">🎈</div>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
-              {/* CRITICAL: XPath matching: `//h3[contains(text(), 'Grand Neon Bash')]/parent::div//button[contains(text(), 'View Details')]` */}
-              <div>
+                        <div className="relative p-8 z-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+                          <div className="flex-1">
+                            <h3 className="text-3xl font-black text-white mb-3">{pkg.title}</h3>
+                            
+                            <div className="flex flex-wrap gap-4">
+                              {pkg.inclusions.slice(0, 3).map((item, i) => (
+                                <div key={i} className="flex items-center text-white/95 gap-2 font-black text-xs">
+                                  <Star className="w-4 h-4 text-accent-yellow fill-accent-yellow" />
+                                  {item}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <span className="text-text-dark/40 text-xs font-bold uppercase tracking-wider text-white/60">Price</span>
+                            <span className="text-accent-yellow text-3xl font-black leading-none">
+                              ₹{pkg.price.toLocaleString('en-IN')}
+                            </span>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewDetails(pkg.id);
+                              }}
+                              className="bg-primary text-white px-8 py-3 rounded-full font-black text-sm hover:bg-primary-dark transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 duration-150"
+                            >
+                              Book Now
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  }
+
+                  return (
+                    <motion.div
+                      key={pkg.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
+                      onClick={() => setActivePackage(pkg)}
+                      className="md:col-span-4 group bg-white rounded-xl overflow-hidden hover-bento shadow-bento flex flex-col border border-muted-pink/20 cursor-pointer"
+                    >
+                      {/* Image header or Gradient card header */}
+                      {pkg.image ? (
+                        <div className="relative h-52 overflow-hidden">
+                          <Image 
+                            className="object-cover group-hover:scale-105 transition-transform duration-700" 
+                            alt={pkg.title}
+                            src={pkg.image}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                          />
+                        </div>
+                      ) : (
+                        <div className={`relative h-52 overflow-hidden bg-gradient-to-br ${gradientClass}`}>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-white/15 text-[80px] select-none pointer-events-none">🎈</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="p-6 flex-grow flex flex-col justify-between">
+                        <div>
+                          <h3 className="text-xl sm:text-2xl font-black text-text-dark mb-2">{pkg.title}</h3>
+                          <p className="text-on-surface-variant text-sm font-bold leading-relaxed mb-4">{pkg.description}</p>
+                          <ul className="space-y-2 mb-6 text-sm font-bold text-on-surface-variant">
+                            {pkg.inclusions.map((item, i) => (
+                              <li key={i} className="flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        <div className="flex items-end justify-between gap-4 mt-2">
+                          <div className="flex flex-col">
+                            <span className="text-text-dark/40 text-xs font-bold uppercase tracking-wider">Price</span>
+                            <span className="text-primary text-2xl font-black leading-none">
+                              ₹{pkg.price.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewDetails(pkg.id);
+                            }}
+                            className="bg-primary text-white hover:bg-primary-dark px-8 py-3 rounded-full font-black text-sm hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-md"
+                          >
+                            Book Now
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </>
+            ) : (
+              /* Coming Soon state for empty categories */
+              <div className="md:col-span-12 text-center py-20">
+                <div className="inline-flex items-center justify-center w-24 h-24 bg-muted-pink/20 rounded-full mb-6">
+                  <Sparkles className="w-12 h-12 text-primary" />
+                </div>
+                <h3 className="text-3xl font-black text-text-dark mb-3">Coming Soon!</h3>
+                <p className="text-on-surface-variant font-bold text-lg max-w-md mx-auto mb-8">
+                  We're crafting amazing packages for this category. Meanwhile, build your own custom package!
+                </p>
                 <button 
-                  onClick={() => handleViewDetails('neon-birthday-bash')}
-                  className="bg-primary text-white px-8 py-3 rounded-full font-black text-sm hover:bg-primary-dark transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 duration-150"
+                  onClick={() => router.push('/packages/custom')}
+                  className="bg-primary text-white px-8 py-3.5 rounded-full font-black text-sm hover:bg-primary-dark transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 duration-150 inline-flex items-center gap-2"
                 >
-                  View Details
+                  Build Custom Package
+                  <Wand2 className="w-4 h-4" />
                 </button>
               </div>
-            </div>
-          </div>
+            )}
 
-          {/* Card 2: Petite Balloon Arch */}
-          <div className="md:col-span-4 group bg-white rounded-xl overflow-hidden hover-bento shadow-bento flex flex-col border border-muted-pink/20">
-            <div className="relative h-64 overflow-hidden">
-              <img 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                alt="Chic white and pink balloon arch"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyqniP3PwWpKo65hnW4deugbhcMq-pB28vgni1MQkED_EfLWCqFpBKwAoB8B20JRsK8US3Bpzc5mRhCBDuqibL0BzEM0nTlNiN9HYWnL3pyOT0oS43GEVNjWvwphUHVbf9tGyzbsFDCPoSXRdx_qvffVo9vf8bMQBj7f3mS6Jyv7simxqgIUd7fVAIQMualNwAm31iXRoHJWJ72X1AS6m6VFudzGh6cKYvwa_UetLOucZuPrx2rmr_BYqCkqUVdMb_83IRbTeRlw"
-              />
-              <div className="absolute top-4 left-4 bg-accent-yellow text-text-dark font-black text-sm px-3.5 py-1.5 rounded-full shadow">
-                ₹1,999
-              </div>
-            </div>
-            
-            <div className="p-6 flex-grow flex flex-col justify-between">
-              <div>
-                <h3 className="text-xl sm:text-2xl font-black text-text-dark mb-3">Petite Balloon Arch</h3>
-                <ul className="space-y-2 mb-6 text-sm font-bold text-on-surface-variant">
-                  <li className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-primary fill-primary/10" />
-                    Single Color Palette
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-primary fill-primary/10" />
-                    2-Hour Setup Time
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-primary fill-primary/10" />
-                    Basic Props Included
-                  </li>
-                </ul>
-              </div>
-              
-              <button 
-                onClick={() => handleViewDetails('petite-balloon-arch')}
-                className="w-full border-2 border-primary text-primary hover:bg-primary hover:text-white px-6 py-2.5 rounded-full font-black text-sm hover:scale-102 active:scale-95 transition-all cursor-pointer"
+            {/* Custom Package CTA Card — always visible when there are packages */}
+            {filteredPackages.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: filteredPackages.length * 0.1 }}
+                onClick={() => router.push('/packages/custom')}
+                className="md:col-span-8 group bg-white rounded-xl p-8 sm:p-10 shadow-bento bento-card relative overflow-hidden cursor-pointer min-h-[250px] flex flex-col justify-between border border-muted-pink/20"
               >
-                View Details
-              </button>
-            </div>
-          </div>
+                <div 
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" 
+                  style={{ backgroundImage: "url('/packages/custom.png')" }}
+                ></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
 
-          {/* Card 3: Floral Fantasy */}
-          <div className="md:col-span-4 group bg-white rounded-xl overflow-hidden hover-bento shadow-bento flex flex-col border border-muted-pink/20">
-            <div className="relative h-64 overflow-hidden">
-              <img 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                alt="Floral birthday ring setup"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdg87QW75L7sqXj8AL2MSgVhPXqehyiDWwef5IlYAGrUiDTLcrMEVnhyGuYuZBbw51roWn2rXUtdZrnfUvLx6Q5txyXkozVrPkGSTw9ss_lqnziK_CK8MpVqGsoisuOczGJM-X8DVugIspK5pJMCfx1edkhCUhv829zJq2OQXkG1FsUcKp9lmpbb-ssm4V-SsbShLc4Wb9fajvi9AowpZW6gDqGW2JttHot3R4RyCRzisyPMuSsvDrWInf7V3_wG38mb9mFcs_IA"
-              />
-              <div className="absolute top-4 left-4 bg-accent-yellow text-text-dark font-black text-sm px-3.5 py-1.5 rounded-full shadow">
-                ₹3,499
-              </div>
-            </div>
-            
-            <div className="p-6 flex-grow flex flex-col justify-between">
-              <div>
-                <h3 className="text-xl sm:text-2xl font-black text-text-dark mb-3">Floral Fantasy</h3>
-                <ul className="space-y-2 mb-6 text-sm font-bold text-on-surface-variant">
-                  <li className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-primary fill-primary/10" />
-                    Fresh Exotic Flowers
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-primary fill-primary/10" />
-                    Golden Circle Frame
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-primary fill-primary/10" />
-                    Personalized Greeting
-                  </li>
-                </ul>
-              </div>
-
-              <button 
-                onClick={() => handleViewDetails('floral-fantasy')}
-                className="w-full border-2 border-primary text-primary hover:bg-primary hover:text-white px-6 py-2.5 rounded-full font-black text-sm hover:scale-102 active:scale-95 transition-all cursor-pointer"
-              >
-                View Details
-              </button>
-            </div>
-          </div>
-
-          {/* Card 4: The Retro Disco */}
-          <div className="md:col-span-8 group bg-white rounded-xl overflow-hidden hover-bento shadow-bento flex flex-col md:flex-row border border-muted-pink/20">
-            <div className="relative md:w-1/2 h-64 md:h-auto overflow-hidden">
-              <img 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                alt="Silver disco balls decor"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7IWePoEpl9vrgkaah5Qix38NC0Ag6yEnSWxbnbRy1Q5mLQvKtERpQi54EWDkoQT2LDgcBJSIvpvm1VpcFG-9D3aEYQT6hh_W16mcUuqS07SvAOGjWvaTEym7rpwtD6Dvuj882XJX9P4tfPt1ROiuDYSI4hR5SM5s-5XpJyAYnIt6n1JXFdrzjpsu7xExQ1xlu5qWHYD21FS7TDcl7xecBxiYPst7whAe76CWfnzRya7zI4HTiLOjOzHil7ndDhsk2MKRLxk4Nwg"
-              />
-              <div className="absolute top-4 left-4 bg-accent-yellow text-text-dark font-black text-sm px-3.5 py-1.5 rounded-full shadow">
-                ₹2,999
-              </div>
-            </div>
-            
-            <div className="p-8 md:w-1/2 flex flex-col justify-center">
-              <h3 className="text-xl sm:text-2xl font-black text-text-dark mb-3">The Retro Disco</h3>
-              <p className="text-on-surface-variant text-sm font-bold leading-relaxed mb-6">
-                Bring the 70s back with our shimmering disco ball installation and iridescent backdrops. Perfect for the dance floor enthusiasts.
-              </p>
-              
-              <div className="space-y-2 mb-8 font-black text-xs text-primary">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary fill-primary/10" />
-                  10+ Disco Balls Setup
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="bg-white/10 p-3 rounded-full group-hover:scale-110 transition-transform">
+                      <Wand2 className="w-6 h-6 text-accent-yellow" />
+                    </div>
+                    <span className="text-xs uppercase tracking-widest text-white/70 font-black">Design Your Own</span>
+                  </div>
+                  
+                  <h3 className="text-3xl sm:text-4xl font-black text-white mb-3 tracking-tight">
+                    Build Your <span className="text-accent-yellow">Custom</span> Package
+                  </h3>
+                  <p className="text-white/80 font-bold text-base max-w-lg leading-relaxed mb-6">
+                    Choose your balloons, banners, decorations, and budget. We'll craft a personalized quote just for you.
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary fill-primary/10" />
-                  Smoke Machine Included
+
+                <div className="relative z-10 flex items-center gap-4">
+                  <span className="bg-white text-text-dark px-8 py-3.5 rounded-full font-black text-sm shadow-lg group-hover:bg-accent-yellow group-hover:scale-105 transition-all duration-300 inline-flex items-center gap-2">
+                    Start Building
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
+                  <span className="text-white/60 font-bold text-sm">Takes 2 min</span>
                 </div>
-              </div>
-
-              <button 
-                onClick={() => handleViewDetails('retro-disco')}
-                className="bg-text-dark text-white px-8 py-3.5 rounded-full font-black text-sm hover:bg-primary hover:scale-105 active:scale-95 transition-all cursor-pointer self-start"
-              >
-                View Details
-              </button>
-            </div>
-          </div>
-
-        </div>
+              </motion.div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </section>
 
-      {/* Social Proof Floating Badges / FAB */}
+      {/* Social Proof Floating Badge / FAB */}
       <div className="fixed bottom-8 right-8 z-40">
         <button 
           onClick={() => router.push('/booking')}
@@ -300,6 +317,121 @@ export default function PackagesScreen() {
           <span className="text-white text-base">🎉</span>
         </button>
       </div>
+      {/* Dynamic Details Modal */}
+      <AnimatePresence>
+        {activePackage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setActivePackage(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 30, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 30, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl overflow-hidden shadow-2xl w-full max-w-2xl border border-muted-pink/20 max-h-[90vh] flex flex-col relative"
+            >
+              {/* Close Button */}
+              <button 
+                onClick={() => setActivePackage(null)}
+                className="absolute top-4 right-4 z-20 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full transition-all cursor-pointer border-none"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Modal Body (Scrollable) */}
+              <div className="overflow-y-auto flex-1">
+                {/* Header Image/Gradient */}
+                <div className="relative h-64 sm:h-80 w-full">
+                  {activePackage.image ? (
+                    <Image 
+                      src={activePackage.image} 
+                      alt={activePackage.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 600px"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-[#ff6b8a] to-accent-yellow/70 flex items-center justify-center">
+                      <span className="text-white/20 text-[100px] select-none">🎈</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <span className="bg-accent-yellow text-text-dark font-black text-xs uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow mb-2 inline-block">
+                      {activePackage.category}
+                    </span>
+                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+                      {activePackage.title}
+                    </h2>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 sm:p-8 space-y-6">
+                  <div>
+                    <h4 className="text-xs uppercase tracking-wider text-text-dark/45 font-black mb-2">Description</h4>
+                    <p className="text-text-dark/80 font-bold text-sm sm:text-base leading-relaxed">
+                      {activePackage.description}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs uppercase tracking-wider text-text-dark/45 font-black mb-3">What's Included</h4>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {activePackage.inclusions.map((item, i) => (
+                        <li key={i} className="flex items-center gap-3 bg-background-light p-3.5 rounded-xl border border-muted-pink/10 font-bold text-xs sm:text-sm text-text-dark">
+                          <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="p-6 sm:p-8 border-t border-gray-100 bg-background-light flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                  <span className="text-text-dark/40 text-xs font-bold uppercase tracking-wider">Price</span>
+                  <span className="text-primary text-2xl sm:text-3xl font-black leading-none">
+                    ₹{activePackage.price.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setActivePackage(null)}
+                    className="px-6 py-3 rounded-full border-2 border-gray-200 text-text-dark font-black text-sm hover:bg-gray-100 transition-all cursor-pointer"
+                  >
+                    Close
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setActivePackage(null);
+                      router.push(`/booking?packageId=${activePackage.id}`);
+                    }}
+                    className="bg-primary text-white hover:bg-primary-dark px-8 py-3 rounded-full font-black text-sm transition-all cursor-pointer shadow-md hover:scale-102 active:scale-95"
+                  >
+                    Book This Style
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
+  );
+}
+
+export default function PackagesScreen() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-screen"><span className="animate-pulse font-black text-primary">Loading...</span></div>}>
+      <PackagesContent />
+    </Suspense>
   );
 }

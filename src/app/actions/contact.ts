@@ -14,9 +14,24 @@ export async function submitContactForm(prevState: any, formData: FormData) {
     return { error: 'Name and email are required.', success: false };
   }
 
+  const emailBody = `
+New Party Inquiry
+==================
+
+Contact Details:
+- Name: ${name}
+- Email: ${email}
+
+Message:
+${message || 'No message provided'}
+
+---
+Sent from Celebration Gallery Contact Form
+  `.trim();
+
   // If there's no API key (e.g. local dev without .env setup), mock the success.
   if (!resend) {
-    console.log('[Mock Resend] Would have sent email:', { name, email, message });
+    console.log('[Mock Resend] Contact form submission:', emailBody);
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     return { success: true, name };
@@ -24,10 +39,10 @@ export async function submitContactForm(prevState: any, formData: FormData) {
 
   try {
     await resend.emails.send({
-      from: 'Celebration Gallery <onboarding@resend.dev>', // Resend testing domain
-      to: ['delivered@resend.dev'], // Deliver to Resend testing inbox or configured email
+      from: 'Celebration Gallery <onboarding@resend.dev>',
+      to: 'kavnish1245@gmail.com', // Update with your email once Resend API key is set
       subject: `New Party Inquiry from ${name}`,
-      text: `Name: ${name}\nEmail: ${email}\nMessage:\n${message}`
+      text: emailBody
     });
     return { success: true, name };
   } catch (error: any) {

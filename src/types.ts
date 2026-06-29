@@ -1,14 +1,30 @@
 export type Screen = 'home' | 'contact' | 'packages' | 'deep_dive' | 'booking' | 'gallery';
 
+export type PackageCategory = 'birthday' | 'romantic' | 'baby-shower' | 'anniversary';
+
 export interface BirthdayPackage {
   id: string;
   title: string;
   price: number;
   image: string;
   description: string;
-  vibe: 'Minimalist' | 'Neon Bash' | 'Floral Fantasy' | 'Vintage Gold';
+  category: PackageCategory;
   inclusions: string[];
-  priceRange: 'all' | '<2000' | '2000-5000' | '5000+';
+}
+
+export interface CustomPackageRequest {
+  balloonCount: number;
+  banners: string[];
+  customBannerText: string;
+  decorationTypes: string[];
+  extras: string[];
+  budgetRange: string;
+  name: string;
+  phone: string;
+  email: string;
+  preferredDate: string;
+  location: string;
+  specialNotes: string;
 }
 
 export interface GalleryItem {
@@ -34,66 +50,54 @@ export interface NavigationState {
 
 export const BIRTHDAY_PACKAGES: BirthdayPackage[] = [
   {
-    id: 'neon-birthday-bash',
-    title: 'Grand Neon Bash',
-    price: 4999,
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDUuKKKLAI2RdK5K5ZnuJ4sTfmOD9yhnAktM6mJH3KudfV7q6TBFh-6sL9bGsDmfqRt4Emwk53Xut15gjOBCAcQ7b4ZPbjYP_97voEy5WsrLaaKe3g3wk_hu1elcf7oavFYUSUJeNO6_QXjWpRGbrOXeQ04BG8YZdoCZGJj3NeFbN73qlYBzJ5CLOua9Ty_-KIdeDUGWfmR1cGJm2NXB6EOu0ltUL9Xrlgtil0BWi7Ukn3ob3boFm-JcmM_ZkikjljKta-lzPLsLA',
-    description: 'Turn up the volume on your celebration with our most vibrant, high-energy setup yet. Perfect for making those Instagram reels pop.',
-    vibe: 'Neon Bash',
-    priceRange: '2000-5000',
+    id: 'balloon-bliss',
+    title: 'Balloon Bliss',
+    price: 2000,
+    image: '/packages/image2000.png',
+    description: 'A classic birthday balloon setup with vibrant colours and a festive banner to set the mood. Perfect for intimate home celebrations.',
+    category: 'birthday',
     inclusions: [
-      "Custom 'Happy Birthday' Neon Signage",
-      "150+ Premium Metallic & Matte Balloons",
-      "Shimmer Wall Backdrop (Gold or Silver)",
-      "Acrylic Cake Pedestal with LED up-lighting",
-      "Professional Setup & Cleanup within Delhi NCR"
+      '200 Balloons',
+      '1 Happy Birthday Banner',
+      '3 Curtains'
     ]
   },
   {
-    id: 'petite-balloon-arch',
-    title: 'Petite Balloon Arch',
-    price: 1999,
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDyqniP3PwWpKo65hnW4deugbhcMq-pB28vgni1MQkED_EfLWCqFpBKwAoB8B20JRsK8US3Bpzc5mRhCBDuqibL0BzEM0nTlNiN9HYWnL3pyOT0oS43GEVNjWvwphUHVbf9tGyzbsFDCPoSXRdx_qvffVo9vf8bMQBj7f3mS6Jyv7simxqgIUd7fVAIQMualNwAm31iXRoHJWJ72X1AS6m6VFudzGh6cKYvwa_UetLOucZuPrx2rmr_BYqCkqUVdMb_83IRbTeRlw',
-    description: 'A minimalist and chic birthday decor set against a clean white wall. A delicate pastel pink balloon arch frames a simple cake table. Soft, natural morning light creates a peaceful and elegant mood.',
-    vibe: 'Minimalist',
-    priceRange: '<2000',
+    id: 'ring-decoration',
+    title: 'Ring Decoration',
+    price: 3000,
+    image: '/packages/image3000.png',
+    description: 'An elegant ring-shaped decoration centerpiece surrounded by a sea of balloons and illuminated with LED birthday lights.',
+    category: 'birthday',
     inclusions: [
-      "Single Color Palette Balloon Arch",
-      "2-Hour Fast Setup Time",
-      "Basic Props & Cake Pedestal Included",
-      "Subtle and Elegant Accent Setup"
+      '300 Balloons',
+      '3 Curtains',
+      'LED Lights of Happy Birthday'
     ]
   },
   {
-    id: 'floral-fantasy',
-    title: 'Floral Fantasy',
-    price: 3499,
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCdg87QW75L7sqXj8AL2MSgVhPXqehyiDWwef5IlYAGrUiDTLcrMEVnhyGuYuZBbw51roWn2rXUtdZrnfUvLx6Q5txyXkozVrPkGSTw9ss_lqnziK_CK8MpVqGsoisuOczGJM-X8DVugIspK5pJMCfx1edkhCUhv829zJq2OQXkG1FsUcKp9lmpbb-ssm4V-SsbShLc4Wb9fajvi9AowpZW6gDqGW2JttHot3R4RyCRzisyPMuSsvDrWInf7V3_wG38mb9mFcs_IA',
-    description: 'A lush floral-themed birthday setup with cascading roses and hydrangeas around a circular golden backdrop. Reflects a romantic, premium, and highly sophisticated celebration style.',
-    vibe: 'Floral Fantasy',
-    priceRange: '2000-5000',
+    id: 'starry-night',
+    title: 'Starry Night',
+    price: 3500,
+    image: '/packages/image3500.png',
+    description: 'A dreamy celestial-themed setup with foil stars, a crescent moon, and a welcome balloon arch. Ideal for a magical birthday night.',
+    category: 'birthday',
     inclusions: [
-      "Fresh Exotic Flowers (Roses & Hydrangeas)",
-      "Premium Golden Circle Frame Setup",
-      "Personalized Acrylic Greeting Board",
-      "Warm Cinematic Spotlight Illuminations"
-    ]
-  },
-  {
-    id: 'retro-disco',
-    title: 'The Retro Disco',
-    price: 2999,
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB7IWePoEpl9vrgkaah5Qix38NC0Ag6yEnSWxbnbRy1Q5mLQvKtERpQi54EWDkoQT2LDgcBJSIvpvm1VpcFG-9D3aEYQT6hh_W16mcUuqS07SvAOGjWvaTEym7rpwtD6Dvuj882XJX9P4tfPt1ROiuDYSI4hR5SM5s-5XpJyAYnIt6n1JXFdrzjpsu7xExQ1xlu5qWHYD21FS7TDcl7xecBxiYPst7whAe76CWfnzRya7zI4HTiLOjOzHil7ndDhsk2MKRLxk4Nwg',
-    description: 'Bring the 70s back with our shimmering disco ball installation and iridescent backdrops. Perfect for the dance floor enthusiasts.',
-    vibe: 'Vintage Gold',
-    priceRange: '2000-5000',
-    inclusions: [
-      "10+ Shimmering Metallic Disco Balls",
-      "Iridescent Backdrop & Streamers Setup",
-      "Dynamic Multi-colored Spotlights",
-      "Special Effects Smoke Machine Included"
+      '300 Balloons',
+      '1× Welcome Foil Balloon',
+      '8× Little Foil Stars',
+      '1× Foil Moon',
+      '3 Curtains'
     ]
   }
+];
+
+export const PACKAGE_CATEGORIES: { label: string; value: PackageCategory | 'all' }[] = [
+  { label: 'All Packages', value: 'all' },
+  { label: 'Birthday', value: 'birthday' },
+  { label: 'Romantic Dinners', value: 'romantic' },
+  { label: 'Baby Showers', value: 'baby-shower' },
+  { label: 'Anniversaries', value: 'anniversary' },
 ];
 
 export const GALLERY_ITEMS: GalleryItem[] = [

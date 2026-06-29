@@ -1,9 +1,8 @@
 "use client";
 import React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { BIRTHDAY_PACKAGES, BirthdayPackage, GalleryItem, GALLERY_ITEMS, BookingData } from '../types';
+import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Tag, ArrowUpRight, Heart, Sparkles, Star, ArrowRight, Phone } from 'lucide-react';
+import { Tag, ArrowUpRight, Heart, Sparkles, Star, ArrowRight, Phone, PartyPopper } from 'lucide-react';
 
 
 
@@ -41,9 +40,9 @@ export default function HomeScreen() {
             <div className="bg-white/40 p-3 rounded-full mb-4 group-hover:scale-110 transition-transform">
               <Tag className="w-6 h-6 text-text-dark" />
             </div>
-            <h3 className="text-text-dark text-xl sm:text-2xl font-black mb-1">Base Packages</h3>
+            <h3 className="text-text-dark text-xl sm:text-2xl font-black mb-1">All Packages</h3>
             <div className="flex items-end gap-2">
-              <span className="text-text-dark text-4xl sm:text-5xl font-black tracking-tight">₹1,999</span>
+              <span className="text-text-dark text-4xl sm:text-5xl font-black tracking-tight">₹2,000</span>
               <span className="text-text-dark/70 font-bold mb-1 text-sm">onwards</span>
             </div>
             <ArrowUpRight className="absolute top-8 right-8 text-text-dark/20 w-24 h-24 transform rotate-[-15deg] pointer-events-none group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" />
@@ -51,7 +50,7 @@ export default function HomeScreen() {
 
           {/* Category 1: Romantic Dinners (Span 4x2 on desktop) */}
           <div 
-            onClick={() => router.push('/packages')}
+            onClick={() => router.push('/packages?category=romantic')}
             className="bento-card lg:col-span-4 lg:row-span-2 bg-white rounded-xl shadow-bento relative overflow-hidden group block min-h-[300px] cursor-pointer"
           >
             <div 
@@ -67,14 +66,9 @@ export default function HomeScreen() {
             </div>
           </div>
 
-          {/* Category 2: Neon Birthday Bash (Span 4x2 on desktop) */}
-          {/* CRITICAL: Must match `//span[text()='Neon Birthday Bash']/ancestor::a` to navigate to Package Deep Dive (`deep_dive`) */}
-          <a 
-            onClick={(e) => {
-              e.preventDefault();
-              router.push('/deep-dive?packageId=neon-birthday-bash');
-            }}
-            href="#neon-birthday-bash"
+          {/* Category 2: Birthday Celebrations (Span 4x2 on desktop) */}
+          <div 
+            onClick={() => router.push('/packages?category=birthday')}
             className="bento-card lg:col-span-4 lg:row-span-2 bg-white rounded-xl shadow-bento relative overflow-hidden group block min-h-[300px] cursor-pointer"
           >
             <div 
@@ -84,15 +78,15 @@ export default function HomeScreen() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
             <div className="absolute bottom-6 left-6 right-6">
               <div className="bg-white/90 backdrop-blur-md rounded-full px-5 py-2.5 inline-flex items-center gap-2 border border-white/40 shadow-sm">
-                <span className="text-text-dark font-black text-base">Neon Birthday Bash</span>
-                <Sparkles className="w-5 h-5 text-primary" />
+                <span className="text-text-dark font-black text-base">Birthday Celebrations</span>
+                <PartyPopper className="w-5 h-5 text-primary" />
               </div>
             </div>
-          </a>
+          </div>
 
           {/* Category 3: Baby Showers (Span 4x1 on desktop) */}
           <div 
-            onClick={() => router.push('/packages')}
+            onClick={() => router.push('/packages?category=baby-shower')}
             className="bento-card lg:col-span-4 lg:row-span-1 bg-white rounded-xl shadow-bento relative overflow-hidden group block min-h-[200px] cursor-pointer"
           >
             <div 
@@ -104,6 +98,33 @@ export default function HomeScreen() {
               <div className="bg-white/90 backdrop-blur-md rounded-full px-5 py-2 inline-flex items-center gap-2 border border-white/40 shadow-sm">
                 <span className="text-text-dark font-black text-base">Baby Showers</span>
                 <span className="text-primary text-xs font-black">🎉</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Custom Package Builder Card (Span 4x1 on desktop) */}
+          <div 
+            onClick={() => router.push('/packages/custom')}
+            className="bento-card lg:col-span-4 lg:row-span-1 bg-white rounded-xl shadow-bento relative overflow-hidden cursor-pointer group min-h-[200px]"
+          >
+            <div 
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" 
+              style={{ backgroundImage: "url('/packages/custom.png')" }}
+            ></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+            <div className="relative z-10 p-8 h-full flex flex-col justify-between">
+              <div>
+                <div className="bg-white/10 p-3 rounded-full mb-3 inline-block group-hover:scale-110 transition-transform">
+                  <Sparkles className="w-5 h-5 text-accent-yellow" />
+                </div>
+                <h3 className="text-white text-lg sm:text-xl font-black mb-1">Custom Package</h3>
+                <p className="text-white/70 text-xs font-bold leading-normal max-w-[200px]">
+                  Mix & match everything to suit your budget.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-black text-accent-yellow group-hover:translate-x-1 transition-transform">
+                <span>Start Building</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </div>
           </div>

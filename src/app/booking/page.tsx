@@ -1,10 +1,11 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BIRTHDAY_PACKAGES, BirthdayPackage, GalleryItem, GALLERY_ITEMS, BookingData } from '../../types';
+import { BIRTHDAY_PACKAGES, BookingData } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Calendar, MapPin, User, Phone, Sparkles, CheckCircle, Package, ShieldCheck } from 'lucide-react';
+import { Calendar, MapPin, User, Phone, Sparkles, CheckCircle, Package, ShieldCheck, Loader2 } from 'lucide-react';
 import { Suspense } from 'react';
+import { submitBooking } from '../actions/booking';
 
 function BookingContent() {
   const router = useRouter();
@@ -12,40 +13,45 @@ function BookingContent() {
   const packageIdParam = searchParams?.get("packageId");
   const dateParam = searchParams?.get("date");
   const locationParam = searchParams?.get("location");
-  const bookingPreset = packageIdParam ? { packageId: packageIdParam, date: dateParam || "", location: locationParam || "" } : null;
-  const setBookingPreset = (preset: any) => {};
 
   const [formData, setFormData] = useState<BookingData>({
-    date: '',
-    location: 'South Delhi',
+    date: dateParam || '',
+    location: locationParam || 'South Delhi',
     fullname: '',
     phone: '',
-    packageId: 'neon-birthday-bash'
+    packageId: packageIdParam || BIRTHDAY_PACKAGES[0]?.id || ''
   });
 
   const [submitted, setSubmitted] = useState(false);
-
-  // Pre-populate fields if a preset is provided
-  useEffect(() => {
-    if (bookingPreset) {
-      setFormData({
-        date: bookingPreset.date,
-        location: bookingPreset.location,
-        fullname: '',
-        phone: '',
-        packageId: bookingPreset.packageId
-      });
-    }
-  }, [bookingPreset]);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const selectedPkg = BIRTHDAY_PACKAGES.find(p => p.id === formData.packageId) || BIRTHDAY_PACKAGES[0];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fullname || !formData.phone || !formData.date) return;
-    setSubmitted(true);
-    // Clear the booking preset upon submission so it doesn't get re-loaded
-    setBookingPreset(null);
+
+    setLoading(true);
+    setErrorMsg('');
+
+    const fd = new FormData();
+    fd.set('fullname', formData.fullname);
+    fd.set('phone', formData.phone);
+    fd.set('date', formData.date);
+    fd.set('location', formData.location);
+    fd.set('packageTitle', selectedPkg?.title || '');
+    fd.set('packagePrice', `₹${selectedPkg?.price?.toLocaleString('en-IN') || 'TBD'}`);
+
+    const result = await submitBooking(fd);
+
+    setLoading(false);
+
+    if (result.success) {
+      setSubmitted(true);
+    } else {
+      setErrorMsg(result.error || 'Something went wrong. Please try again.');
+    }
   };
 
   const handleBackToHome = () => {
@@ -82,13 +88,13 @@ function BookingContent() {
             <h2 className="text-3xl font-black text-text-dark mb-4 tracking-tight">Booking Confirmed!</h2>
             
             <p className="text-on-surface-variant font-bold text-sm max-w-sm mx-auto mb-8 leading-relaxed">
-              Congratulations {formData.fullname}! Your setup date for the <span className="text-primary">{selectedPkg.title}</span> has been locked. Our local Delhi NCR coordinator will ping your WhatsApp shortly.
+              Congratulations {formData.fullname}! Your setup date for the <span className="text-primary">{selectedPkg?.title || 'package'}</span> has been locked. Our local Delhi NCR coordinator will ping your WhatsApp shortly.
             </p>
 
             <div className="bg-background-light p-6 rounded-2xl border border-gray-100 text-left space-y-4 mb-8">
               <div className="flex justify-between items-center text-sm font-bold">
                 <span className="text-on-surface-variant">Setup Package:</span>
-                <span className="text-text-dark">{selectedPkg.title}</span>
+                <span className="text-text-dark">{selectedPkg?.title || 'N/A'}</span>
               </div>
               <div className="flex justify-between items-center text-sm font-bold">
                 <span className="text-on-surface-variant">Scheduled Date:</span>
@@ -105,7 +111,7 @@ function BookingContent() {
               <hr className="border-gray-200" />
               <div className="flex justify-between items-center font-black text-base">
                 <span className="text-text-dark">Amount Due Post-Setup:</span>
-                <span className="text-primary">₹{selectedPkg.price}</span>
+                <span className="text-primary">₹{selectedPkg?.price?.toLocaleString('en-IN') || 'TBD'}</span>
               </div>
             </div>
 
@@ -139,14 +145,21 @@ function BookingContent() {
                 </label>
                 <select 
                   value={formData.packageId}
-                  onChange={(e) => setFormData({ ...formData, packageId: e.target.value })}
+                  onChange={(e) => {
+                    if (e.target.value === 'custom') {
+                      router.push('/packages/custom');
+                      return;
+                    }
+                    setFormData({ ...formData, packageId: e.target.value });
+                  }}
                   className="w-full bg-background-light border-2 border-transparent hover:border-muted-pink focus:border-primary rounded-xl p-4 font-bold text-text-dark outline-none transition-all cursor-pointer"
                 >
                   {BIRTHDAY_PACKAGES.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.title} (₹{p.price})
+                      {p.title} (₹{p.price.toLocaleString('en-IN')})
                     </option>
                   ))}
+                  <option value="custom">✨ Custom Package — Build Your Own</option>
                 </select>
               </div>
 
@@ -225,11 +238,25 @@ function BookingContent() {
                 </span>
               </div>
 
+              {errorMsg && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold">
+                  {errorMsg}
+                </div>
+              )}
+
               <button 
                 type="submit"
-                className="w-full bg-primary text-white py-4 rounded-full font-black text-lg shadow-lg hover:shadow-bento-hover hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                disabled={loading}
+                className="w-full bg-primary text-white py-4 rounded-full font-black text-lg shadow-lg hover:shadow-bento-hover hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Complete Booking
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  'Complete Booking'
+                )}
               </button>
             </form>
           </motion.div>
